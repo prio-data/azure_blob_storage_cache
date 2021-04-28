@@ -1,5 +1,3 @@
-import json
-import pickle
 from . import BlobCache,exceptions
 
 class Sigstring:
@@ -19,24 +17,18 @@ class Sigstring:
     def sig(self):
         return self.args,self.kwargs
 
-def cache(blob_cache:BlobCache, use_json = True):
+def cache(blob_cache:BlobCache):
     """
     Wrap a function, caching its results using a BlobCache instance.
     """
-
-    if use_json: 
-        serialize,deserialize = json.dumps,json.loads
-    else:
-        serialize,deserialize = pickle.dumps,pickle.loads
-
     def wrapper(fn):
         key = lambda *args,**kwargs: fn.__name__ + str(Sigstring(*args,**kwargs))
         def inner(*args,**kwargs):
             try:
-                result = deserialize(blob_cache[key(*args,**kwargs)])
+                result = blob_cache[key(*args,**kwargs)]
             except exceptions.NotCached:
                 result = fn(*args,**kwargs)
-                blob_cache[key(*args,**kwargs)] = serialize(result)
+                blob_cache[key(*args,**kwargs)] = result
             return result
         return inner
     return wrapper 

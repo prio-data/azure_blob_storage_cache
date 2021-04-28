@@ -1,3 +1,7 @@
+import pickle
+from azure.storage.blob import BlobServiceClient
+from azure.core.exceptions import ResourceNotFoundError
+from .exceptions import NotCached
 
 class BlobCache():
     def __init__(self,connection_string,container_name):
@@ -17,8 +21,8 @@ class BlobCache():
             value = blob_client.download_blob().content_as_bytes()
         except ResourceNotFoundError as rnf:
             raise NotCached from rnf
-        return value
+        return pickle.loads(value)
 
     def __setitem__(self,key,value):
         blob_client = self.client().get_blob_client(key)
-        blob_client.upload_blob(value)
+        blob_client.upload_blob(pickle.dumps(value))
